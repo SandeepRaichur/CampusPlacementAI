@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #1e40af;
+}
+
+/* Correct way to use @apply in v4 */
+.btn-primary {
+  @apply bg-brand text-white px-4 py-2 rounded-xl transition-all;
+  @apply hover:scale-105 active:scale-95;
+}
+
+/* Global resets in v4 */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
