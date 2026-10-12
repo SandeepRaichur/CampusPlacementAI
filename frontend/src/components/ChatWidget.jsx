@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot } from 'lucide-react';
+import { apiUrl } from '../api/config';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,10 +30,8 @@ export default function ChatWidget() {
     setIsTyping(true);
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
-
       // Send to FastAPI Backend
-      const res = await fetch(`${apiBaseUrl}/api/chat`, {
+      const res = await fetch(apiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg })
@@ -42,12 +41,9 @@ export default function ChatWidget() {
       const botText = data.reply || data.response || "Sorry, I ran into an error connecting to the brain.";
       
       // Add AI response to UI
-      if (res.ok) {
-        setMessages(prev => [...prev, { sender: 'ai', text: botText }]);
-      } else {
-        setMessages(prev => [...prev, { sender: 'ai', text: botText }]);
-      }
+      setMessages(prev => [...prev, { sender: 'ai', text: botText }]);
     } catch (err) {
+      console.error("Chat service error:", err);
       setMessages(prev => [...prev, { sender: 'ai', text: "Error: Could not reach the AI server. Is it running?" }]);
     } finally {
       setIsTyping(false);

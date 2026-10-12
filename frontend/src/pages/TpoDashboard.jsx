@@ -1,13 +1,13 @@
 // src/pages/TpoDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Building2, Users, CheckCircle, LogOut, Bell, 
   ShieldCheck, Activity, BarChart3, Search, Briefcase, TrendingUp,
   Calendar, Bot, AlertTriangle, PieChart, Target, FileText, Download,
-  GraduationCap // <--- JUST ADD THIS LINE
+  GraduationCap
 } from 'lucide-react';
+import { apiUrl } from '../api/config';
 
 export default function TpoDashboard() {
   const navigate = useNavigate();
@@ -25,8 +25,8 @@ export default function TpoDashboard() {
     const fetchGlobalData = async () => {
       try {
         const [jobsRes, studentsRes] = await Promise.all([
-          fetch('http://localhost:8000/api/jobs'),
-          fetch('http://localhost:8000/api/admin/students')
+          fetch(apiUrl('/api/jobs')),
+          fetch(apiUrl('/api/admin/students'))
         ]);
         
         if (jobsRes.ok) setActiveJobs(await jobsRes.json());
@@ -42,9 +42,7 @@ export default function TpoDashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('nexus_token');
-    localStorage.removeItem('nexus_role');
-    localStorage.removeItem('nexus_email');
+    localStorage.clear();
     navigate('/login');
   };
 

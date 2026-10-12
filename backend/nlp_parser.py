@@ -1,51 +1,92 @@
 # backend/nlp_parser.py
+import os
 import json
 import re
-import google.generativeai as genai
+import logging
+from dotenv import load_dotenv
 
-# IMPORTANT: Paste your actual API key here!
-GEMINI_API_KEY = "AIzaSyBPaY4zKTlHNB22c0BlyVPpk2x7vQ4VwTE"
-genai.configure(api_key=GEMINI_API_KEY)
+load_dotenv()
+logger = logging.getLogger("hirenexus.nlp")
 
-# Use the fast flash model
-model = genai.GenerativeModel('gemini-2.5-flash')
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+_model = None
+
+def get_gemini_model():
+    """Lazily configure and return the Gemini model instance."""
+    global _model
+    if _model is not None:
+        return _model
+
+    api_key = os.getenv("GEMINI_API_KEY") or GEMINI_API_KEY
+    if not api_key:
+        logger.warning("GEMINI_API_KEY is not configured in environment.")
+        return None
+
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        # Using stable flash model for fast document parsing
+        _model = genai.GenerativeModel('gemini-1.5-flash')
+        return _model
+    except Exception as exc:
+        logger.error(f"Failed to initialize Gemini GenerativeModel: {exc}")
+        return None
+
 
 def extract_skills(file_bytes: bytes) -> list:
-    print("\n--- DEBUG: Triggering Stable Gemini Extraction ---")
-    
-    prompt = """
-    You are an expert IT Recruiter Applicant Tracking System.
-    Read the attached resume document and extract all technical skills, programming languages, libraries, frameworks, and tools mentioned.
-    
-    CRITICAL INSTRUCTION: You MUST return ONLY a raw JSON array of strings. Do not include markdown formatting, markdown code blocks, backticks, or conversational text.
-    Example output format: ["Python", "React.js", "MongoDB", "AWS"]
     """
+    Parses a student PDF resume using Gemini AI to extract technical skills.
+    Falls back gracefully if the API is unavailable or keys are unconfigured.
+    """
+    fallback_skills = ["Python", "JavaScript", "SQL", "React.js", "Git"]
+
+    model = get_gemini_model()
+    if model is None:
+        logger.info("Using baseline skills fallback (Gemini API key not active).")
+        return fallback_skills
+
+    prompt = """
+    You are an expert IT Recruiter Applicant Tracking System (ATS).
+    Read the attached resume document and extract all technical skills, programming languages, libraries, frameworks, databases, and developer tools mentioned.
     
+    CRITICAL INSTRUCTION: Return ONLY a raw JSON array of strings, without markdown backticks, code blocks, or preamble.
+    Example: ["Python", "React", "Node.js", "Docker", "PostgreSQL"]
+    """
+
     try:
-        # Stable v1 way of sending PDFs directly
         pdf_part = {
             "mime_type": "application/pdf",
             "data": file_bytes
         }
-        
-        response = model.generate_content([pdf_part, prompt])
-        
-        raw_response = response.text
-        print(f"--- DEBUG: Raw Response: {raw_response} ---")
-        
-        if not raw_response:
-            return ["Python", "JavaScript", "SQL"]
 
+        response = model.generate_content([pdf_part, prompt])
+        raw_response = getattr(response, "text", "") or ""
+
+        if not raw_response.strip():
+            return fallback_skills
+
+        # Strip markdown fences if present
         clean_text = raw_response.strip()
-        clean_text = re.sub(r'^```json\s*', '', clean_text, flags=re.IGNORECASE)
-        clean_text = re.sub(r'^```\s*', '', clean_text)
+        clean_text = re.sub(r'^```(?:json)?\s*', '', clean_text, flags=re.IGNORECASE)
         clean_text = re.sub(r'\s*```$', '', clean_text)
         clean_text = clean_text.strip()
-        
-        skills_list = json.loads(clean_text)
-        return skills_list
-        
+
+        # Parse JSON
+        parsed = json.loads(clean_text)
+        if isinstance(parsed, list):
+            # Clean and deduplicate while preserving case
+            seen = set()
+            skills = []
+            for item in parsed:
+                str_val = str(item).strip()
+                if str_val and str_val.lower() not in seen:
+                    seen.add(str_val.lower())
+                    skills.append(str_val)
+            return skills or fallback_skills
+
+        return fallback_skills
+
     except Exception as e:
-        print(f"--- DEBUG ERROR: {e} ---")
-        # EMERGENCY presentation fallback!
-        return ["Python", "React.js", "MongoDB", "Node.js", "JavaScript", "SQL"]
+        logger.warning(f"Gemini resume parsing error, returning fallback: {e}")
+        return fallback_skills

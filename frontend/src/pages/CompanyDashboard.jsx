@@ -1,6 +1,5 @@
 // src/pages/CompanyDashboard.jsx
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Briefcase, 
   Plus, 
@@ -22,6 +21,7 @@ import {
   TrendingUp, 
   Target 
 } from 'lucide-react';
+import { apiUrl } from '../api/config';
 
 export default function CompanyDashboard() {
   // Navigation State
@@ -47,24 +47,24 @@ export default function CompanyDashboard() {
     min_cgpa: '' 
   });
 
-  const hrEmail = localStorage.getItem('nexus_email') || "hr@company.com";
+  const hrEmail = localStorage.getItem('userEmail') || localStorage.getItem('nexus_email') || "hr@company.com";
   const companyName = "TechNova Solutions";
 
-  // Fetch HR's Jobs on Load
-  useEffect(() => { 
-    fetchJobs(); 
-  }, []);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/jobs/hr/${hrEmail}`);
+      const res = await fetch(apiUrl(`/api/jobs/hr/${hrEmail}`));
       if (res.ok) {
         setJobs(await res.json());
       }
     } catch (err) {
       console.error("Failed to fetch jobs", err);
     }
-  };
+  }, [hrEmail]);
+
+  // Fetch HR's Jobs on Load
+  useEffect(() => { 
+    fetchJobs(); 
+  }, [fetchJobs]);
 
   const handlePostJob = async (e) => {
     e.preventDefault();
@@ -80,7 +80,7 @@ export default function CompanyDashboard() {
     };
     
     try {
-      const res = await fetch('http://localhost:8000/api/jobs', { 
+      const res = await fetch(apiUrl('/api/jobs'), { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify(jobPayload) 
@@ -101,8 +101,8 @@ export default function CompanyDashboard() {
     setIsLoadingData(true);
     try {
       const [matchRes, appRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/jobs/${job._id}/matches`),
-        fetch(`http://localhost:8000/api/jobs/${job._id}/applications`)
+        fetch(apiUrl(`/api/jobs/${job._id}/matches`)),
+        fetch(apiUrl(`/api/jobs/${job._id}/applications`))
       ]);
       if (matchRes.ok) {
         const matchData = await matchRes.json();
@@ -118,12 +118,12 @@ export default function CompanyDashboard() {
     }
   };
 
-  // NEW FUNCTION: Handles updating candidate recruitment workflow status dynamically
+  // Handles updating candidate recruitment workflow status dynamically
   const handleUpdateStatus = async (studentEmail, newStatus) => {
     if (!selectedJob) return;
     
     try {
-      const res = await fetch(`http://localhost:8000/api/applications/status`, {
+      const res = await fetch(apiUrl('/api/applications/status'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,6 +132,10 @@ export default function CompanyDashboard() {
           status: newStatus
         })
       });
+
+      if (!res.ok) {
+        console.warn("Status update request returned non-OK status");
+      }
 
       // Optimistic Local UI Update to ensure real-time visual alignment during demo
       const updatedApps = applications.map(app => 

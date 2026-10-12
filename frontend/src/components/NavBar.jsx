@@ -1,23 +1,18 @@
 // src/components/Navbar.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Bot, LogIn, LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+  // Location hook ensures re-render on route changes so auth state stays in sync
+  useLocation();
 
-  // Every time the URL changes, check if the user has an ID card (token)
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-  }, [location]);
+  const isAuthenticated = Boolean(localStorage.getItem('token') || localStorage.getItem('nexus_token'));
 
   const handleLogout = () => {
-    localStorage.clear(); // Destroy token
-    setIsAuthenticated(false);
+    localStorage.clear(); // Destroy session
     navigate('/'); // Kick to home
   };
 

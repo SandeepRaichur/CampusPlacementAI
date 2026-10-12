@@ -95,7 +95,7 @@ export default function HomePage() {
           </motion.p>
 
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <Link to="/student/setup" className="w-full sm:w-auto px-10 py-4 bg-blue-600 text-white rounded-xl font-extrabold text-lg shadow-2xl shadow-blue-600/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-2.5 active:scale-95">
+            <Link to="/student/dashboard" className="w-full sm:w-auto px-10 py-4 bg-blue-600 text-white rounded-xl font-extrabold text-lg shadow-2xl shadow-blue-600/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-2.5 active:scale-95">
               Get Started Free <ChevronRight className="h-5 w-5" />
             </Link>
             <Link 

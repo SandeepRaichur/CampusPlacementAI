@@ -1,8 +1,8 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Building2, ArrowRight, Bot, ShieldCheck, Eye, EyeOff, Shield } from 'lucide-react';
+import { apiUrl } from '../api/config';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function LoginPage() {
     const endpoint = isSignUp ? '/api/signup' : '/api/login';
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+      const response = await fetch(apiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role })
@@ -58,24 +58,29 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // FIXED: Using standard keys so ProtectedRoute allows entry
-        localStorage.setItem('token', data.token || 'auth_token_set');
+        // Save session tokens & user metadata under all standard keys
+        const token = data.token || 'auth_token_set';
+        localStorage.setItem('token', token);
+        localStorage.setItem('nexus_token', token);
         localStorage.setItem('userEmail', email);
+        localStorage.setItem('nexus_email', email);
         localStorage.setItem('role', role);
+        localStorage.setItem('nexus_role', role);
         
         // Route to exact dashboard based on role
         if (role === 'student') {
-          navigate('/student/setup'); 
+          navigate('/student/dashboard'); 
         } else if (role === 'hr') {
           navigate('/company/dashboard');
         } else if (role === 'tpo') {
-          navigate('/admin/dashboard'); // FIXED: Matches App.jsx route
+          navigate('/admin/dashboard');
         }
       } else {
-        alert(`Authentication Error: ${data.detail}`);
+        alert(`Authentication Error: ${data.detail || 'Unable to sign in'}`);
       }
-    } catch (err) {
-      alert("Could not connect to the database. Is the Python server running?");
+    } catch (error) {
+      console.error("Authentication error:", error);
+      alert("Could not connect to the database. Is the server running?");
     } finally {
       setIsAuthenticating(false);
     }

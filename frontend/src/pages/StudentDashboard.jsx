@@ -1,17 +1,17 @@
 // src/pages/StudentDashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, FileText, Briefcase, Settings, LogOut, Bell, 
   CheckCircle, TrendingUp, LayoutDashboard, UploadCloud, 
   Target, Award, BookOpen, ChevronRight, Activity, 
   MapPin, DollarSign, Sparkles, CheckCircle2, Send, X, Info
 } from 'lucide-react';
+import { apiUrl } from '../api/config';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
-  const studentEmail = localStorage.getItem('nexus_email') || 'S.Raichur2005@gmail.com';
+  const studentEmail = localStorage.getItem('userEmail') || localStorage.getItem('nexus_email') || 'student@campus.edu';
 
   // Navigation State
   const [activeView, setActiveView] = useState('overview'); 
@@ -27,7 +27,7 @@ export default function StudentDashboard() {
   const [applyingJob, setApplyingJob] = useState(null); 
   const [isApplying, setIsApplying] = useState(false);
   const [appForm, setAppForm] = useState({
-    fullName: 'Sandeep', 
+    fullName: 'Student', 
     phone: '',
     education_details: '', 
     cgpa: '',
@@ -37,27 +37,27 @@ export default function StudentDashboard() {
   });
 
   // Fetch real data from MongoDB on load
-  const fetchRealData = async () => {
+  const fetchRealData = useCallback(async () => {
     try {
-      const profileRes = await fetch(`http://localhost:8000/api/students/${studentEmail}`);
+      const profileRes = await fetch(apiUrl(`/api/students/${studentEmail}`));
       if (profileRes.ok) {
         const profileData = await profileRes.json();
         if (profileData.extracted_skills) setExtractedSkills(profileData.extracted_skills);
       }
 
-      const jobsRes = await fetch(`http://localhost:8000/api/jobs`);
+      const jobsRes = await fetch(apiUrl('/api/jobs'));
       if (jobsRes.ok) setAllJobs(await jobsRes.json());
 
-      const appsRes = await fetch(`http://localhost:8000/api/students/${studentEmail}/applications`);
+      const appsRes = await fetch(apiUrl(`/api/students/${studentEmail}/applications`));
       if (appsRes.ok) setMyApplications(await appsRes.json());
     } catch (err) {
       console.error("Failed to load database data", err);
     }
-  };
+  }, [studentEmail]);
 
   useEffect(() => {
     fetchRealData();
-  }, [studentEmail]);
+  }, [fetchRealData]);
 
   // --- DYNAMIC CALCULATIONS ---
   const atsScore = extractedSkills.length > 0 ? Math.min(100, 45 + (extractedSkills.length * 4)) : 0;
@@ -88,7 +88,7 @@ export default function StudentDashboard() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/students/${studentEmail}/parse-resume`, {
+      const response = await fetch(apiUrl(`/api/students/${studentEmail}/parse-resume`), {
         method: 'POST', body: formData
       });
       if (response.ok) {
@@ -100,6 +100,7 @@ export default function StudentDashboard() {
         alert("Failed to parse resume.");
       }
     } catch (error) {
+      console.error("Resume upload failed:", error);
       alert("Backend connection failed.");
     } finally {
       setIsUploading(false);
@@ -123,7 +124,7 @@ export default function StudentDashboard() {
         portfolio_link: "N/A"
       };
 
-      const response = await fetch(`http://localhost:8000/api/jobs/${applyingJob._id}/apply`, {
+      const response = await fetch(apiUrl(`/api/jobs/${applyingJob._id}/apply`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -141,6 +142,7 @@ export default function StudentDashboard() {
         alert(errData.detail || "Failed to apply.");
       }
     } catch (error) {
+      console.error("Job application error:", error);
       alert("Could not connect to server.");
     } finally {
       setIsApplying(false);
