@@ -3,6 +3,7 @@ import os
 import json
 import re
 import logging
+from typing import List
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,16 +26,16 @@ def get_gemini_model():
 
     try:
         import google.generativeai as genai
-        genai.configure(api_key=api_key)
+        genai.configure(api_key=api_key)  # type: ignore
         # Using stable flash model for fast document parsing
-        _model = genai.GenerativeModel('gemini-1.5-flash')
+        _model = genai.GenerativeModel('gemini-1.5-flash')  # type: ignore
         return _model
     except Exception as exc:
         logger.error(f"Failed to initialize Gemini GenerativeModel: {exc}")
         return None
 
 
-def extract_skills(file_bytes: bytes) -> list:
+def extract_skills(file_bytes: bytes) -> List[str]:
     """
     Parses a student PDF resume using Gemini AI to extract technical skills.
     Falls back gracefully if the API is unavailable or keys are unconfigured.

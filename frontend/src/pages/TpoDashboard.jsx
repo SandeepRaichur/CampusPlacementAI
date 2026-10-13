@@ -1,6 +1,7 @@
 // src/pages/TpoDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Building2, Users, CheckCircle, LogOut, Bell, 
   ShieldCheck, Activity, BarChart3, Search, Briefcase, TrendingUp,

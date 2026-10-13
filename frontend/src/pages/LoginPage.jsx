@@ -1,6 +1,7 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Building2, ArrowRight, Bot, ShieldCheck, Eye, EyeOff, Shield } from 'lucide-react';
 import { apiUrl } from '../api/config';
 

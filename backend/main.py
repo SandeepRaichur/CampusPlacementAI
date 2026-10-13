@@ -185,7 +185,7 @@ async def login(user: UserAuth):
 # ==========================================
 @app.post("/api/students/{student_email}/parse-resume", tags=["Students"])
 async def parse_resume(student_email: str, file: UploadFile = File(...)):
-    if not file.filename.lower().endswith('.pdf'):
+    if not file.filename or not file.filename.lower().endswith('.pdf'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only PDF resume documents are supported."

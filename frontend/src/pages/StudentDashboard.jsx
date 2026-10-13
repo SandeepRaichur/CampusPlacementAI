@@ -1,6 +1,7 @@
 // src/pages/StudentDashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, FileText, Briefcase, Settings, LogOut, Bell, 
   CheckCircle, TrendingUp, LayoutDashboard, UploadCloud, 
