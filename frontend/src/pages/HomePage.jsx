@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 // IMPORT THE SMART NAVBAR HERE
-import Navbar from '../components/Navbar'; 
+import Navbar from '../components/NavBar'; 
 
 // Reusable animated gradient background for cards
 const GradientGlow = () => (

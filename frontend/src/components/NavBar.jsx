@@ -1,4 +1,4 @@
-// src/components/Navbar.jsx
+// src/components/NavBar.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Bot, LogIn, LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
